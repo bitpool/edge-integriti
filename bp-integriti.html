@@ -1,0 +1,424 @@
+<!--de.warn
+  MIT License Copyright 2021, 2022 - Bitpool Pty Ltd
+-->
+<!-- PrimeVue -->
+<link href="resources/@bitpool/node-red-integriti/primevue-bitpool-theme.css" rel="stylesheet" />
+<link href="resources/@bitpool/node-red-integriti/primevue.min.css" rel="stylesheet" />
+<link href="resources/@bitpool/node-red-integriti/primeflex.min.css" rel="stylesheet" />
+<link href="resources/@bitpool/node-red-integriti/primeicons.css" rel="stylesheet" />
+
+<script>
+  // Custom script loader to ensure dependencies load every time
+  (function () {
+      LoadScripts();
+
+      function LoadScripts(async) {
+          if (async === undefined) {
+              async = false;
+          }
+          var scripts = [];
+          var _scripts = ['resources/@bitpool/node-red-integriti/vue.global.prod.js', 'resources/@bitpool/node-red-integriti/core.min.js','resources/@bitpool/node-red-integriti/accordion.min.js','resources/@bitpool/node-red-integriti/accordiontab.min.js'];
+
+          if (async) {
+              LoadScriptsAsync(_scripts, scripts)
+          } else {
+              LoadScriptsSync(_scripts, scripts)
+          }
+      }
+
+      // What you are looking for :
+      function LoadScriptsSync(_scripts, scripts) {
+
+          var x = 0;
+          var loopArray = function (_scripts, scripts) {
+              // Call itself
+              loadScript(_scripts[x], scripts[x], function () {
+                  // Set x to next item
+                  x++;
+                  // Any more items in array?
+                  if (x < _scripts.length) {
+                      loopArray(_scripts, scripts);
+                  }
+              });
+          }
+          loopArray(_scripts, scripts);
+      }
+
+      // Async load as in your code
+      function LoadScriptsAsync(_scripts, scripts) {
+          for (var i = 0; i < _scripts.length; i++) {
+              loadScript(_scripts[i], scripts[i], function () { });
+          }
+      }
+
+      // Load script function with callback to handle synchronicity 
+      function loadScript(src, script, callback) {
+
+          script = document.createElement('script');
+          script.onerror = function () {
+              // handling error when loading script
+              console.log('Error - could not load Integriti node HTML dependencies')
+          }
+          script.onload = function () {
+              callback();
+          }
+          script.src = src;
+          document.getElementsByTagName('head')[0].appendChild(script);
+      }
+  })();
+</script>
+
+<script type="text/javascript">
+
+  var vueStr;
+
+
+
+  RED.nodes.registerType("bp-integriti", {
+    category: "Bitpool Integriti",
+    defaults: {
+      name: {value: "Bitpool Integriti"},
+      bpintegritiDisplayName: {value: ""},
+      bpChkShowDateOnLabel: { value: true },
+      bpChkShowDebugWarnings: { value: true },
+      bpintegritiEndpoint: { value: "http://192.168.1.1"},
+      bpintegritiEndpointPort: { value: "80"},
+    },
+    inputs: 1,
+    outputs: 1,
+    color: "#00aeef",
+    icon: "bitpool.svg",
+    label: function () {
+      return this.bpintegritiDisplayName || "integriti";
+    },
+    paletteLabel: function () {
+      return "integriti";
+    },
+    oneditprepare: function () {
+
+        //**************************************PRIME VUE APP****************************************************************************************************************************
+
+        const { createApp, ref, onMounted, onUnmounted} = Vue;
+
+const App = {
+  data() {
+    return {
+      Tree_Loading: true,
+      //selectedKeys: null,
+      Tree: {},
+      nodes: null,
+      expandedKeys: {}
+      
+    }
+  },
+
+  setup() {
+    const Tree = ref();
+    const expandedKeys = ref({});
+    const selectedKeys = ref({});
+
+    const expandAll = () => {
+        for (let Tree of Tree.value) {
+            expandNode(Tree);
+        }
+
+        expandedKeys.value = {...expandedKeys.value};
+    };
+
+    const collapseAll = () => {
+        expandedKeys.value = {};
+    };
+
+    const expandNode = (Tree) => {
+        if (Tree.children && Tree.children.length) {
+            expandedKeys.value[Tree.key] = true;
+
+            for (let child of Tree.children) {
+                expandNode(child);
+            }
+        }
+    };
+
+    return {Tree, expandedKeys, selectedKeys, expandAll, collapseAll, expandNode}
+
+  },
+    
+  mounted() {                                           // This executes every time the node UI is opened
+    let app = this;
+
+    console.log("Mounted");
+    
+    //if(app.Tree == "{}"){
+      try{
+        app.Refresh_Tree();                                 // Refresh the tree
+  
+      }
+      catch (e){
+        console.log(e);
+      }
+        //}
+  }, 
+
+  beforeUnmount(){
+    console.log("Before Unmount");
+  },
+  
+  methods: {
+
+    // REFRESH TREE FUNCTION ====================================================
+    // 
+    // ==========================================================================
+    Refresh_Tree(event){
+      let app = this;
+
+      app.Tree_Loading = true;
+
+      $.getJSON('/bitpool-integriti-data/getTree', function(data) {
+       // console.log(data)
+      app.Tree = data;
+
+      //if(!(app.selectedKeys == null)){
+      selct(app.Tree);
+      //}
+      
+      //console.log(data)
+      
+      function selct(array){
+        for(let i = 0; i<array.length; i++){
+          //console.log(array[i].selected)
+          if(array[i].selected == false){
+            //console.log("we are setting ", app.selectedKeys[array[i].key])
+            app.selectedKeys[array[i].key] = {checked: false, partialChecked: true};
+          }
+          if(array[i].selected == true){
+            app.selectedKeys[array[i].key] = {checked: true, partialChecked: false};
+          }
+          if(array[i].children != null){
+              selct(array[i].children);
+          }
+          }
+        }
+        //console.log(app.selectedKeys)
+
+      //console.log(app.selectedKeys);
+      app.Tree_Loading = false;
+      });
+
+   },
+   
+
+   Check_Selection(event){
+    let app = this;
+    $.getJSON('/bitpool-integriti-data/getTree', function(data) {
+    app.Tree = data;
+    var filtered =[];
+    //var currentSelection = Object.keys(app.selectedKeys);
+    var currentSelection = app.selectedKeys;
+    
+    // for(const property in currentSelection){
+    //   let value = currentSelection[property];
+    //   //console.log(`${property}: `, value);
+    //   if(value.checked){
+    //     elements = String(property).split('-');
+    //     if(elements.length == 3){
+    //     parent = elements[0];
+    //     type = elements[1];
+    //     child = elements[2];
+    //     filtered.push(data[parent].children[type].children[child])
+    //     }
+    //     if(elements.length == 2){
+        
+    //     parent = elements[0];
+    //     type = elements[1];
+    //     filtered.push(data[parent].children[type])
+    //     }
+    //     if(elements.length == 1){
+    //     parent = elements[0];
+    //     filtered.push(data[parent])
+    //     }
+    //   }
+      for(const property in currentSelection){
+      let value = currentSelection[property];
+      //console.log(`${property}: `, value);
+
+      //ERROR IN HERE!!
+      if(value.checked){
+        elements = String(property).split('-');
+        if(elements.length == 3){
+        parent = elements[0];
+        type = elements[1];
+        child = elements[2];
+        filtered.push(data[parent].children[type].children[child].label)
+        }
+        if(elements.length == 2){
+        
+        parent = elements[0];
+        type = elements[1];
+        console.log("this is the parent - "+data[parent].label);
+        console.log("this is the type - "+data[parent].children[type]);
+        if(data[parent].children[type]){
+          filtered.push(data[parent].label+"_"+data[parent].children[type].label)
+        }
+        else{
+          filtered.push(data[parent].label)
+        }
+        }
+        if(elements.length == 1){
+        parent = elements[0];
+        filtered.push(data[parent].label)
+        }
+      }
+
+    }
+    console.log(filtered)
+
+    filtered = JSON.stringify(filtered);
+
+    $.getJSON('/bitpool-integriti-data/setSelected?data=' + filtered);
+    // for(let i = 0; i<currentSelection.length;i++){
+    //console.log(currentSelection)
+    //   if(currentSelection[i].value == "{checked: true, partialChecked: false}"){
+    //   const intersection = data.filter(t => t.key == currentSelection[i])
+    //   console.log(intersection," intersection for "+currentSelection[i])
+    //   }
+    //   }
+      
+  })
+   },
+
+    onNodeExpand(node){
+      console.log("Node Expanded.");
+    },
+
+    onNodeSelect(node){
+      console.log("Node selected:",node);
+    },
+
+    onNodeUnselect(node){
+      console.log("Node unselected:", node);
+    }
+
+  },
+
+  // Declare Prime Vue Component
+  components: {
+      "p-button": primevue.button,                                            // Declare P Button
+      "p-tree": primevue.tree                                                 // Declare P Tree
+  }
+};
+
+const MyApp = createApp(App)
+    .use(primevue.config.default, { ripple: true })
+    //.mount("#viessmann-settings-tab");
+    .mount("#app");
+
+
+        //**************************************END VUE APP****************************
+
+      let tabs = RED.tabs.create(
+        {
+          id: "node-input-display-tabs",
+          onchange: function (tab) {
+            $("#node-input-tabs-content").children().hide()
+            $("#" + tab.id).show()
+          }
+        })
+      tabs.addTab(
+      {
+          id: "integriti-settings-tab",
+          label: "Settings"
+      })        
+      tabs.addTab(
+        {
+          id: "integriti-options-tab",
+          label: "Options"
+        })
+
+      $("#node-input-bpintegritiDisplayName").typedInput({type: 'str', types: ['str']});
+    }
+  });
+</script>
+
+<script type="text/html" data-template-name="bp-integriti">
+    <div class="form-row">
+      <label for="node-input-bpintegritiDisplayName"><i class="icon-tag"></i>Name</label>
+      <input type="text" id="node-input-bpintegritiDisplayName" placeholder="integriti description">
+    </div>
+
+    <div class='form-row node-input-display-tabs-row'>
+      <ul style='min-width:600px;margin-bottom:20px' id='node-input-display-tabs'></ul>
+    </div>
+
+    <div id='node-input-tabs-content'>
+      <div id='integriti-options-tab' style='display:none'>
+        <div class="form-row">
+          <p><u>Monitoring:</u></p>
+        </div>
+
+        <div class="form-row" style="display: flex;">
+          <div class="form-check" style="width: 8%; display: grid; align-content: space-between;">
+            <input class="form-check-input" type="checkbox" value="" id="node-input-bpChkShowDateOnLabel" checked>
+          </div>
+          <label id="node-label-bpChkShowDateOnLabel" for="node-input-bpChkShowDateOnLabel" style="text-align:left; vertical-align:bottom; width: 100%;">Show input activity on node status</label>
+        </div>
+  
+        <div class="form-row" style="display: flex;">
+          <div class="form-check" style="width: 8%; display: grid; align-content: space-between;">
+            <input class="form-check-input" type="checkbox" value="" id="node-input-bpChkShowDebugWarnings" checked>
+          </div>
+          <label id="node-label-bpChkShowDebugWarnings" for="node-input-bpChkShowDebugWarnings" style="text-align:left; vertical-align:middle; width: 100%;">Show any warnings in debug tab</label>
+        </div>
+      </div>
+
+      <div id="integriti-settings-tab" style="display:none">
+        <div class="form-row">
+          <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+          <input type="text" id="node-input-name" placeholder="Name">
+      </div>
+        <div class="form-row">
+          <label for="node-input-bpintegritiEndpoint"><i class="fa fa-tag"></i>Server</label>
+          <input type="text" id="node-input-bpintegritiEndpoint" placeholder="URL">
+        </div>
+        <div class="form-row">
+          <label for="node-input-bpintegritiEndpointPort"><i class="fa fa-tag"></i>Port</label>
+          <input type="text" id="node-input-bpintegritiEndpointPort" placeholder="Port">
+        </div>
+        
+        <style>
+          .refresh-button {
+            min-width: 100px;
+          }
+          </style>
+          
+          <div id="app">
+              <p-tree :value="Tree" :expanded-keys="expandedKeys" selection-mode="checkbox" v-model:selection-keys="selectedKeys" @node-expand="onNodeExpand" @node-select="onNodeSelect" @node-unselect="onNodeUnselect" :loading="Tree_Loading" style="margin-top:5px"></p-tree>
+              <p-button id="Display_Selection_Button" class="p-button-raised p-button-text" @click="Check_Selection()" style="margin-right: 10px;">Save</p-button>
+              <p-button id="Discover_Button" class="p-button-raised p-button-text refresh-button" icon="pi pi-refresh" @click="Refresh_Tree()">Refresh</p-button>
+          </div>
+          
+        
+      </div>
+
+    </div>
+    
+  </script>
+
+
+<script type="text/html" data-help-name="bp-integriti">
+  <p>This node allows discovery of Integriti Controllers and their associated Doors and Inputs</p>
+  <hr style="width: 100%;">
+    <h3>How to use:</h3>
+    <ol type="1">
+      <li>Update the Server Endpoint location.</li>
+      <li>Trigger the discovery with refresh or injection.</li>
+      <li>Select the required Elements and Save to being sending Data messages.</li>
+    </ol>
+    <hr>
+    <h3>Resources:</h3>
+    <h4><strong>Online Docs:</strong></h4>
+    <ul type="1">
+      <li><a href="https://www.bitpool.com/">bitpool.com</a> - check us out here.</li>
+      <li><a href="https://app.bitpool.com/">app.bitpool.com</a> - set up your account.</li>
+      <li><a href="https://wiki.bitpool.com/">wiki.bitpool.com</a> - find more documentation.</li>
+    </ul>
+  </script>
