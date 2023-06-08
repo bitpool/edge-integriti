@@ -1,6 +1,6 @@
 {
     "name": "@bitpoolos/edge-integriti",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Node module to connect to Integriti controller.",
     "dependencies": {
         "node-fetch": "2.6.7",
