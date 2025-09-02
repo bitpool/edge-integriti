@@ -1,44 +1,44 @@
 {
-    "name": "@bitpoolos/edge-integriti",
-    "version": "1.0.4",
-    "description": "Node module to connect to Integriti controller.",
-    "dependencies": {
-        "node-fetch": "2.6.7",
-        "xml2json": "0.12.0",
-        "toad-scheduler": "^1.6.0"
-    },
-    "node-red": {
-        "version": ">=2.2.2",
-        "nodes": {
-            "bp-integriti": "bp-integriti.js"
-        }
-    },
-    "keywords": [
-        "node-red",
-        "bitpool",
-        "integriti",
-        "security",
-        "edge",        
-        "iot"        
-    ],
-    "engines": {
-        "node": ">=12.0.0"
-    },
-    "author": {
-        "name": "bitpool-dev",
-        "email": "dev@bitpool.com"
-    },
-    "license": "MIT",
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://registry.npmjs.org/"
-    },
-    "bugs": {
-        "url": "https://github.com/bitpool/edge-integriti/issues"
-    },
-    "homepage": "https://github.com/bitpool/edge-integriti#readme",
-    "repository": {
-        "type": "github",
-        "url": "git+https://github.com/edge-integriti.git"
+  "name": "@bitpoolos/edge-integriti",
+  "version": "1.0.5",
+  "description": "Node module to connect to Integriti controller.",
+  "dependencies": {
+    "node-fetch": "2.6.7",
+    "xml2json": "0.12.0",
+    "toad-scheduler": "^1.6.0"
+  },
+  "node-red": {
+    "version": ">=2.2.2",
+    "nodes": {
+      "bp-integriti": "bp-integriti.js"
     }
+  },
+  "keywords": [
+    "node-red",
+    "bitpool",
+    "integriti",
+    "security",
+    "edge",
+    "iot"
+  ],
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "author": {
+    "name": "bitpool-dev",
+    "email": "dev@bitpool.com"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "bugs": {
+    "url": "https://github.com/bitpool/edge-integriti/issues"
+  },
+  "homepage": "https://github.com/bitpool/edge-integriti#readme",
+  "repository": {
+    "type": "github",
+    "url": "git+https://github.com/edge-integriti.git"
+  }
 }
