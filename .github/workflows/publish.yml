@@ -1,0 +1,36 @@
+name: Publish to npm
+
+# Publishes @bitpoolos/edge-integriti to https://registry.npmjs.org.
+#
+# The mechanics live in bitpool/workflows so every @bitpoolos package shares one
+# copy — see that repo's README for the inputs and caller requirements.
+#
+# Pushes to main are safe: the reusable workflow checks npm for the version in
+# package.json first, so only a version bump actually publishes.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate + npm publish --dry-run only (no publish/tag/release)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    uses: bitpool/workflows/.github/workflows/npm-publish.yml@v1
+    # The org sets default_workflow_permissions: read, so these must be granted
+    # here or the run dies as startup_failure with no logs at all.
+    permissions:
+      contents: write # tag + release
+      id-token: write # provenance
+    with:
+      provenance: true
+    # NPM_TOKEN is an org secret scoped to the npm repos.
+    secrets: inherit
