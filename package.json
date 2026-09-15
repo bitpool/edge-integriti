@@ -39,6 +39,6 @@
   "homepage": "https://github.com/bitpool/edge-integriti#readme",
   "repository": {
     "type": "github",
-    "url": "git+https://github.com/edge-integriti.git"
+    "url": "git+https://github.com/bitpool/edge-integriti.git"
   }
 }
